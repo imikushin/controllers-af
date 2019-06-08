@@ -1,0 +1,4 @@
+apiVersion: silly.example.org/v1alpha1
+kind: ConfigMapCount
+metadata:
+  name: configmapcount-sample

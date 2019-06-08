@@ -1,0 +1,24 @@
+# permissions for end users to edit configmapcounts.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: configmapcount-editor-role
+rules:
+- apiGroups:
+  - silly.example.org
+  resources:
+  - configmapcounts
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - silly.example.org
+  resources:
+  - configmapcounts/status
+  verbs:
+  - get
