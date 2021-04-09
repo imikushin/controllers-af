@@ -4,12 +4,14 @@ A Go library for building Kubernetes Controllers - As Functions
 
 ### Why
 
-Building Kubernetes controllers is hard. One of the reasons is: it is very hard to write unit-tests for controllers. 
-Why is that? Controllers need to talk to the Kubernetes API all the time, and it takes enormous discipline to mock out 
-these interactions. So, what ends up happening: we don't do it, and our controllers become branching spaghetti monsters.
+Building Kubernetes controllers is hard. One of the reasons is: it is very hard to write unit-tests for controllers. Why
+is that? Controllers need to talk to the Kubernetes API all the time, and it takes enormous discipline to mock out these
+interactions. So, what ends up happening: we don't do it, and our controllers become branching spaghetti monsters.
 
-Enter Controllers AF. It is a tiny library (or micro-framework) built on top of [controller-runtime](https://github.com/kubernetes-sigs/controller-runtime)
-and is designed to do one thing: separate controller logic from interactions with Kubernetes API. Usage section below illustrates how to use it. We also provide a fully functioning [example](example).
+Enter Controllers AF. It is a tiny library (or micro-framework) built on top
+of [controller-runtime](https://github.com/kubernetes-sigs/controller-runtime)
+and is designed to do one thing: separate controller logic from interactions with Kubernetes API. Usage section below
+illustrates how to use it. We also provide a fully functioning [example](example).
 
 ### Usage
 

@@ -72,8 +72,21 @@ func Reconcile(_ context.Context, object client.Object, getDetails function.GetD
 		Selector:  cmSelector,
 	}).(*corev1.ConfigMapList)
 
+	cmCount := len(cmList.Items)
+
+	for cmList.Continue != "" {
+		cmList = getDetails(function.Query{
+			Namespace: cmc.Namespace,
+			Type:      &corev1.ConfigMapList{},
+			Selector:  cmSelector,
+			Options:   []client.ListOption{client.Continue(cmList.Continue)},
+		}).(*corev1.ConfigMapList)
+
+		cmCount += len(cmList.Items)
+	}
+
 	cmc.Status = sillyv1alpha1.ConfigMapCountStatus{
-		ConfigMaps: len(cmList.Items),
+		ConfigMaps: cmCount,
 	}
 
 	return &function.Effects{Persists: []client.Object{cmc}}, nil
@@ -81,7 +94,7 @@ func Reconcile(_ context.Context, object client.Object, getDetails function.GetD
 
 func labelSelector(cmcInputObject *sillyv1alpha1.ConfigMapCount) (labels.Selector, error) {
 	if cmcInputObject.Spec.Selector == nil {
-		return nil, nil
+		return labels.Everything(), nil
 	}
 	return metav1.LabelSelectorAsSelector(cmcInputObject.Spec.Selector)
 }

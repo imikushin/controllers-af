@@ -38,10 +38,12 @@ type Effects struct {
 
 // Query is a generalized API query - for either Get or List. The Type field is required, and MUST be an empty
 // instance of a client.Object (if Name is non-empty) or client.ObjectList (Selector is an optional
-// filter for the list).
+// filter for the list). Options field is an optional list of []client.ListOption. Namespace and Selector values
+// override those set by Options.
 type Query struct {
 	Type      runtime.Object
 	Namespace string
 	Name      string
 	Selector  labels.Selector
+	Options   []client.ListOption
 }

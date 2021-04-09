@@ -210,10 +210,7 @@ func runQuery(ctx context.Context, c client.Client, cache cache, query function.
 		if !castOK {
 			return nil, errors.Errorf("casting %v to client.ObjectList type", query.Type)
 		}
-		opts := []client.ListOption{
-			client.InNamespace(query.Namespace),
-			selectorOpt(query.Selector),
-		}
+		opts := append(query.Options, client.InNamespace(query.Namespace), selectorOpt(query.Selector))
 		if err := c.List(ctx, list, opts...); err != nil {
 			return nil, err
 		}
