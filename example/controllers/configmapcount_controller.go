@@ -23,7 +23,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -36,9 +35,7 @@ import (
 
 // ConfigMapCountReconciler reconciles a ConfigMapCount object
 type ConfigMapCountReconciler struct {
-	Client client.Client
-	Log    logr.Logger
-	Scheme *runtime.Scheme
+	Log logr.Logger
 }
 
 // +kubebuilder:rbac:groups=silly.example.org,resources=configmapcounts,verbs=get;list;watch;create;update;patch;delete
@@ -47,8 +44,8 @@ type ConfigMapCountReconciler struct {
 func (r *ConfigMapCountReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&sillyv1alpha1.ConfigMapCount{}).
-		Watches(&source.Kind{Type: &corev1.ConfigMap{}}, reconciler.EnqueueRequestsForQuery(r.Client, r.Log, configMapCountsInTheSameNS)).
-		Complete(reconciler.New(r.Client, r.Log, &sillyv1alpha1.ConfigMapCount{}, Reconcile))
+		Watches(&source.Kind{Type: &corev1.ConfigMap{}}, reconciler.EnqueueRequestsForQuery(mgr.GetClient(), r.Log, configMapCountsInTheSameNS)).
+		Complete(reconciler.New(mgr.GetClient(), r.Log, &sillyv1alpha1.ConfigMapCount{}, r.Reconcile))
 }
 
 func configMapCountsInTheSameNS(obj client.Object) function.Query {
@@ -58,7 +55,7 @@ func configMapCountsInTheSameNS(obj client.Object) function.Query {
 	}
 }
 
-func Reconcile(_ context.Context, object client.Object, getDetails function.GetDetails) (*function.Effects, error) {
+func (r *ConfigMapCountReconciler) Reconcile(_ context.Context, object client.Object, getDetails function.GetDetails) (*function.Effects, error) {
 	cmc := object.(*sillyv1alpha1.ConfigMapCount)
 
 	cmSelector, err := labelSelector(cmc)
@@ -84,6 +81,8 @@ func Reconcile(_ context.Context, object client.Object, getDetails function.GetD
 
 		cmCount += len(cmList.Items)
 	}
+
+	r.Log.Info("updated ConfigMap count", "namespace", cmc.Namespace, "count", cmCount)
 
 	cmc.Status = sillyv1alpha1.ConfigMapCountStatus{
 		ConfigMaps: cmCount,
