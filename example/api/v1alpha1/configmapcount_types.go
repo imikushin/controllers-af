@@ -24,7 +24,7 @@ import (
 type ConfigMapCountSpec struct {
 	// Selector selects ConfigMaps to count
 	// +optional
-	Selector *metav1.LabelSelector `json:"selector,omitempty"`
+	Selector metav1.LabelSelector `json:"selector,omitempty"`
 }
 
 // ConfigMapCountStatus defines the observed state of ConfigMapCount

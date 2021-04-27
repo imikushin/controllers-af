@@ -92,8 +92,5 @@ func (r *ConfigMapCountReconciler) Reconcile(_ context.Context, object client.Ob
 }
 
 func labelSelector(cmcInputObject *sillyv1alpha1.ConfigMapCount) (labels.Selector, error) {
-	if cmcInputObject.Spec.Selector == nil {
-		return labels.Everything(), nil
-	}
-	return metav1.LabelSelectorAsSelector(cmcInputObject.Spec.Selector)
+	return metav1.LabelSelectorAsSelector(&cmcInputObject.Spec.Selector)
 }

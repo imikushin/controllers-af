@@ -20,6 +20,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/go-logr/logr"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -40,6 +41,12 @@ func TestAPIs(t *testing.T) {
 }
 
 var _ = Describe("Reconcile", func() {
+	var cmcReconciler *ConfigMapCountReconciler
+
+	BeforeEach(func() {
+		cmcReconciler = &ConfigMapCountReconciler{Log: logr.Discard()}
+	})
+
 	When("no ConfigMaps exist in the same namespace", func() {
 		expectedCMs := &corev1.ConfigMapList{
 			Items: []corev1.ConfigMap{{}, {}}, // len() == 2
@@ -52,7 +59,7 @@ var _ = Describe("Reconcile", func() {
 		It("should set .status.configMaps to 0", func() {
 			inputCMC := &v1alpha1.ConfigMapCount{}
 
-			effects, err := Reconcile(context.TODO(), inputCMC, getDetails)
+			effects, err := cmcReconciler.Reconcile(context.TODO(), inputCMC, getDetails)
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(effects).ToNot(BeNil())
