@@ -198,7 +198,9 @@ func (r *reconciler) patch(ctx context.Context, cache cache, object client.Objec
 		return err
 	}
 	if err := r.client.Status().Patch(ctx, status, patch); err != nil {
-		return err
+		if !apierrors.IsNotFound(err) {
+			return err
+		}
 	}
 	return nil
 }
