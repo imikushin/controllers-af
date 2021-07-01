@@ -97,7 +97,7 @@ func (r *reconciler) Reconcile(ctx context.Context, request reconcile.Request) (
 		retErr = panicErr(recover(), retErr)
 	}()
 	effects, err := r.f(ctx, obj, r.getDetails(ctx, cache)) // r.getDetails() panic-wraps an error
-	if err != nil {
+	if err != nil || effects == nil {
 		return reconcile.Result{}, err
 	}
 
