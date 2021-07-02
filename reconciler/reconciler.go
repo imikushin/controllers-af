@@ -134,19 +134,11 @@ func (r *reconciler) getDetails(ctx context.Context, cache cache) function.GetDe
 }
 
 func (r *reconciler) persistObjects(ctx context.Context, cache cache, objects []client.Object) error {
-	created := make(created, len(objects))
+	persisted := make(persisted, len(objects))
 
 	for _, object := range objects {
 		object := object
-
-		if object.GetUID() == "" {
-			if err := r.create(ctx, created, object); err != nil {
-				return err
-			}
-			continue
-		}
-
-		if err := r.patch(ctx, cache, object); err != nil {
+		if err := r.persist(ctx, cache, persisted, object); err != nil {
 			return err
 		}
 	}
@@ -164,11 +156,11 @@ func (r *reconciler) deleteObjects(ctx context.Context, objects []client.Object)
 	return nil
 }
 
-type created map[corev1.ObjectReference]client.Object
+type persisted map[corev1.ObjectReference]client.Object
 
-func (created created) add(object client.Object) {
+func (persisted persisted) add(object client.Object) {
 	apiVersion, kind := object.GetObjectKind().GroupVersionKind().ToAPIVersionAndKind()
-	created[corev1.ObjectReference{
+	persisted[corev1.ObjectReference{
 		APIVersion: apiVersion,
 		Kind:       kind,
 		Namespace:  object.GetNamespace(),
@@ -176,15 +168,32 @@ func (created created) add(object client.Object) {
 	}] = object
 }
 
-func (r *reconciler) create(ctx context.Context, created created, object client.Object) error {
-	if err := fixOwnerRefUIDs(object, created); err != nil {
+func (r *reconciler) persist(ctx context.Context, cache cache, persisted persisted, object client.Object) (retErr error) {
+	defer func() {
+		if retErr != nil {
+			return
+		}
+		persisted.add(object)
+	}()
+	if err := r.fixOwnerRefUIDs(persisted, object); err != nil {
 		return err
 	}
-	if err := r.client.Create(ctx, object); err != nil {
-		return err
+	if object.GetUID() == "" {
+		existing := r.getDetails(ctx, cache)(function.Query{
+			Type:      newEmpty(object),
+			Namespace: object.GetNamespace(),
+			Name:      object.GetName(),
+		})
+		if existing == nil {
+			return r.client.Create(ctx, object)
+		}
+		object.SetUID(existing.(client.Object).GetUID())
 	}
-	created.add(object)
-	return nil
+	return r.patch(ctx, cache, object)
+}
+
+func newEmpty(object client.Object) client.Object {
+	return reflect.New(reflect.TypeOf(object).Elem()).Interface().(client.Object)
 }
 
 func (r *reconciler) patch(ctx context.Context, cache cache, object client.Object) error {
@@ -259,22 +268,22 @@ func addListToCache(cache cache, list client.ObjectList) {
 	}
 }
 
-func fixOwnerRefUIDs(object client.Object, created created) error {
+func (r *reconciler) fixOwnerRefUIDs(persisted persisted, object client.Object) error {
 	ownerRefs := object.GetOwnerReferences()
 	for i, ownerRef := range ownerRefs {
 		if ownerRef.UID == "" {
-			createdObject, exists := created[createdKey(ownerRef, object.GetNamespace())]
+			persistedOwner, exists := persisted[objectRef(ownerRef, object.GetNamespace())]
 			if !exists {
-				return errors.Errorf("creating %s %s/%s, cannot find ownerRef %+v", object.GetObjectKind().GroupVersionKind(), object.GetNamespace(), object.GetName(), ownerRef)
+				return errors.Errorf("when persisting %s %s/%s, cannot find its ownerRef %+v in newly persisted objects: OwnerReferences referring to already existing objects should set UID", object.GetObjectKind().GroupVersionKind(), object.GetNamespace(), object.GetName(), ownerRef)
 			}
-			ownerRefs[i].UID = createdObject.GetUID()
+			ownerRefs[i].UID = persistedOwner.GetUID()
 		}
 	}
 	object.SetOwnerReferences(ownerRefs)
 	return nil
 }
 
-func createdKey(ownerRef v1.OwnerReference, namespace string) corev1.ObjectReference {
+func objectRef(ownerRef v1.OwnerReference, namespace string) corev1.ObjectReference {
 	return corev1.ObjectReference{
 		APIVersion: ownerRef.APIVersion,
 		Kind:       ownerRef.Kind,

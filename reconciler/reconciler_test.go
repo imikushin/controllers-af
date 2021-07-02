@@ -59,3 +59,13 @@ func TestPanicWithArg(t *testing.T) {
 	}()
 	assert.Equal(t, expectedErr, err)
 }
+
+func TestNewEmpty(t *testing.T) {
+	cm0 := &corev1.ConfigMap{}
+	cm1 := &corev1.ConfigMap{Data: map[string]string{"qq": "11"}}
+	assert.Equal(t, cm0, newEmpty(cm1))
+}
+
+func TestReconciler(t *testing.T) {
+
+}

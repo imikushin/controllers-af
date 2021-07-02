@@ -28,12 +28,21 @@ type GetDetails func(query Query) runtime.Object
 
 type ObjectToQuery func(obj client.Object) Query
 
-// Effects specify the changes intended as results of the reconciler function. Persists is the list of objects to
-// persist: create or update, depending on whether the object has a UID (which is supposed to be assigned by the
-// Kubernetes API). Deletes is the list of objects to delete
+// Effects specify the changes intended as results of the reconciler function.
 type Effects struct {
-	Persists []client.Object // Create | Update
-	Deletes  []client.Object
+	// Persists lists objects to persist: create or update.
+	//
+	// If an object is being updated, its UID field is recommended to be set (otherwise, the update costs an extra GET
+	// request).
+	//
+	// OwnerReferences of persisted objects should have UID field set. The only exception is when an OwnerReference is to
+	// an object being persisted in the same Persists list (and its UID is, obviously, not yet known). In such cases, the
+	// owner object should come earlier in the Persists list, as it is processed sequentially.
+	Persists []client.Object
+
+	// Deletes lists objects to delete. Deletes are handled after Persists to allow for necessary preparation, like
+	// removing finalizers. It is also processed sequentially.
+	Deletes []client.Object
 }
 
 // Query is a generalized API query - for either Get or List. The Type field is required, and MUST be an empty
