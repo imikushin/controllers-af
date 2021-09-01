@@ -25,7 +25,6 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 	// +kubebuilder:scaffold:imports
 
 	"github.com/imikushin/controllers-af/example/api/v1alpha1"
@@ -35,9 +34,7 @@ import (
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
 
-	RunSpecsWithDefaultAndCustomReporters(t,
-		"Controller Suite",
-		[]Reporter{printer.NewlineReporter{}})
+	RunSpecs(t, "Controller Suite")
 }
 
 var _ = Describe("Reconcile", func() {
