@@ -56,9 +56,11 @@ type reconciler struct {
 	f       Function
 }
 
+type ObjectToQuery func(obj client.Object) function.Query
+
 // EnqueueRequestsForQuery allows to create a handler.EventHandler by providing a function.ObjectToQuery function.
 // It is kind of like a handler.EnqueueRequestsFromMapFunc, but without the boring parts :)
-func EnqueueRequestsForQuery(c client.Client, log logr.Logger, toQuery function.ObjectToQuery) handler.EventHandler {
+func EnqueueRequestsForQuery(c client.Client, log logr.Logger, toQuery ObjectToQuery) handler.EventHandler {
 	return handler.EnqueueRequestsFromMapFunc(func(object client.Object) []reconcile.Request {
 		query := toQuery(object)
 
@@ -133,7 +135,7 @@ func (r *reconciler) getDetails(ctx context.Context, cache cache) function.GetDe
 	}
 }
 
-func (r *reconciler) persistObjects(ctx context.Context, cache cache, objects []client.Object) error {
+func (r *reconciler) persistObjects(ctx context.Context, cache cache, objects []function.Object) error {
 	persisted := make(persisted, len(objects))
 
 	for _, object := range objects {
@@ -146,7 +148,7 @@ func (r *reconciler) persistObjects(ctx context.Context, cache cache, objects []
 	return nil
 }
 
-func (r *reconciler) deleteObjects(ctx context.Context, objects []client.Object) error {
+func (r *reconciler) deleteObjects(ctx context.Context, objects []function.Object) error {
 	for _, object := range objects {
 		object := object
 		if err := r.client.Delete(ctx, object); err != nil {

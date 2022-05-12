@@ -88,7 +88,7 @@ func (r *ConfigMapCountReconciler) Reconcile(_ context.Context, object client.Ob
 		ConfigMaps: cmCount,
 	}
 
-	return &function.Effects{Persists: []client.Object{cmc}}, nil
+	return &function.Effects{Persists: []function.Object{cmc}}, nil
 }
 
 func labelSelector(cmcInputObject *sillyv1alpha1.ConfigMapCount) (labels.Selector, error) {
